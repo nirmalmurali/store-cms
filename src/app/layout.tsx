@@ -4,7 +4,6 @@ import "./globals.css";
 import "@/styles/utilities.less";
 import "@/styles/store.less";
 import ThemeRegistry from "@/app/ThemeRegistry";
-import Layout from "@/components/Layout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <ThemeRegistry>
-          <Layout>{children}</Layout>
-        </ThemeRegistry>
+        <ThemeRegistry>{children}</ThemeRegistry>
       </body>
     </html>
   );
