@@ -252,6 +252,7 @@ export default function AddProductPage() {
                             alt="preview"
                             width={50}
                             height={50}
+                            unoptimized
                             style={{
                               objectFit: "cover",
                               borderRadius: "4px",

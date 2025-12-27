@@ -72,8 +72,13 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [keyword]);
 
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
   // Construct Query Params
   const queryParams = {
+    page,
+    limit,
     keyword: debouncedKeyword,
     ...(appliedFilters.status !== "all" && { status: appliedFilters.status }),
     ...(appliedFilters.minPrice && { minPrice: appliedFilters.minPrice }),
@@ -83,15 +88,11 @@ export default function Dashboard() {
   };
 
   // RTK Query Hooks
-  const {
-    data: products = [],
-    isLoading,
-    error,
-  } = useGetProductsQuery(queryParams);
-  const [deleteProduct] = useDeleteProductMutation();
+  const { data, isLoading, error } = useGetProductsQuery(queryParams);
 
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const products = data?.products || [];
+  const totalPages = data?.pages || 1;
+  const [deleteProduct] = useDeleteProductMutation();
 
   useEffect(() => {
     if (error) {
@@ -187,6 +188,7 @@ export default function Dashboard() {
               alt={row.name}
               fill
               sizes="50px"
+              unoptimized
               style={{ objectFit: "cover" }}
             />
           ) : (

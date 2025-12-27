@@ -212,6 +212,7 @@ export default function ProductDetailsPage() {
                             alt={`Product Media ${index + 1}`}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            unoptimized
                             style={{
                               objectFit: "cover",
                             }}
