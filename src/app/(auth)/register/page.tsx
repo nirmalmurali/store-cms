@@ -14,6 +14,8 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Cookies from "js-cookie";
+import { API_URL } from "../../../config";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 export default function RegisterPage() {
@@ -38,7 +40,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch(`${API_URL}/api/admin/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
@@ -47,6 +49,7 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
+        Cookies.set("admin_token", data.token, { expires: 1 });
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data));
         router.push("/");
@@ -166,18 +169,18 @@ export default function RegisterPage() {
         <Box sx={{ textAlign: "center" }}>
           <Typography variant="body2" color="text.secondary">
             Already have an account?{" "}
-            <Link href="/login" passHref legacyBehavior>
-              <MuiLink
-                underline="hover"
-                sx={{
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  color: "primary.main",
-                }}
-              >
-                Sign In
-              </MuiLink>
-            </Link>
+            <MuiLink
+              component={Link}
+              href="/login"
+              underline="hover"
+              sx={{
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "primary.main",
+              }}
+            >
+              Sign In
+            </MuiLink>
           </Typography>
         </Box>
       </Box>

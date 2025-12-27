@@ -18,6 +18,8 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Cookies from "js-cookie";
+import { useLoginMutation } from "@/services/authApi";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,35 +27,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [login, { isLoading }] = useLoginMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await login({ email, password }).unwrap();
 
-      const data = await res.json();
-
-      if (res.ok) {
-        // In a production app, use HTTP-only cookies
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data));
-        router.push("/"); // Redirect to dashboard
-      } else {
-        setError(data.message || "Invalid credentials");
-      }
-    } catch (err) {
+      // Set cookie for middleware access (expires in 1 day)
+      Cookies.set("admin_token", data.token, { expires: 1 });
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+      router.push("/dashboard"); // Redirect to dashboard
+    } catch (err: any) {
       console.error(err);
-      setError("Unable to connect to the server.");
-    } finally {
-      setLoading(false);
+      setError(err?.data?.message || err.message || "Invalid credentials");
     }
   };
 
@@ -121,16 +111,16 @@ export default function LoginPage() {
         />
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-          <Link href="/forgot-password" passHref legacyBehavior>
-            <MuiLink
-              variant="body2"
-              color="text.secondary"
-              underline="hover"
-              sx={{ cursor: "pointer" }}
-            >
-              Forgot Password?
-            </MuiLink>
-          </Link>
+          <MuiLink
+            component={Link}
+            href="/forgot-password"
+            variant="body2"
+            color="text.secondary"
+            underline="hover"
+            sx={{ cursor: "pointer" }}
+          >
+            Forgot Password?
+          </MuiLink>
         </Box>
 
         <Button
@@ -138,8 +128,8 @@ export default function LoginPage() {
           fullWidth
           variant="contained"
           size="large"
-          disabled={loading}
-          startIcon={!loading && <LoginIcon />}
+          disabled={isLoading}
+          startIcon={!isLoading && <LoginIcon />}
           sx={{
             mt: 1,
             mb: 3,
@@ -151,24 +141,24 @@ export default function LoginPage() {
             boxShadow: "0 4px 14px 0 rgba(25, 118, 210, 0.39)",
           }}
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {isLoading ? "Signing in..." : "Sign In"}
         </Button>
 
         <Box sx={{ textAlign: "center" }}>
           <Typography variant="body2" color="text.secondary">
             Don't have an account?{" "}
-            <Link href="/register" passHref legacyBehavior>
-              <MuiLink
-                underline="hover"
-                sx={{
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  color: "primary.main",
-                }}
-              >
-                Create Account
-              </MuiLink>
-            </Link>
+            <MuiLink
+              component={Link}
+              href="/register"
+              underline="hover"
+              sx={{
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "primary.main",
+              }}
+            >
+              Create Account
+            </MuiLink>
           </Typography>
         </Box>
       </Box>

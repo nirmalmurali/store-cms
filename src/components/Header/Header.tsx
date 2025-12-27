@@ -9,8 +9,18 @@ import {
   IconButton,
 } from "@mui/material";
 import { ShoppingCart, Menu as MenuIcon } from "@mui/icons-material";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 export default function Header() {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    Cookies.remove("admin_token");
+    router.push("/login");
+  };
+
   return (
     <AppBar position="sticky" color="default" elevation={1}>
       <Toolbar>
@@ -33,10 +43,15 @@ export default function Header() {
         </Typography>
 
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          <Button color="inherit">Dashboard</Button>
+          <Button color="inherit" component={Link} href="/dashboard">
+            Dashboard
+          </Button>
           <Button color="inherit">Products</Button>
           <Button color="inherit">Orders</Button>
           <Button color="inherit">Settings</Button>
+          <Button color="error" onClick={handleLogout}>
+            Logout
+          </Button>
 
           <IconButton color="inherit" aria-label="shopping cart">
             <ShoppingCart />
