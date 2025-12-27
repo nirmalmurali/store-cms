@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Box,
   Button,
@@ -15,11 +16,22 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  TextField,
+  MenuItem,
+  InputAdornment,
+  Grid,
+  Menu,
+  Slider,
 } from "@mui/material";
-import { Visibility, Edit, Delete, Add as AddIcon } from "@mui/icons-material";
+import {
+  Visibility,
+  Edit,
+  Delete,
+  Add as AddIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CommonTable, { Column } from "@/components/Table/CommonTable";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -30,12 +42,67 @@ import {
 } from "@/services/productApi";
 
 export default function Dashboard() {
+  const [keyword, setKeyword] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const filterOpen = Boolean(filterAnchorEl);
+
+  const [filters, setFilters] = useState({
+    status: "all",
+    priceRange: [0, 10000],
+    stockRange: [0, 1000],
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: "",
+    minPrice: "",
+    maxPrice: "",
+    minStock: "",
+    maxStock: "",
+  });
+
+  // Debounce Search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [keyword]);
+
+  // Construct Query Params
+  const queryParams = {
+    keyword: debouncedKeyword,
+    ...(appliedFilters.status !== "all" && { status: appliedFilters.status }),
+    ...(appliedFilters.minPrice && { minPrice: appliedFilters.minPrice }),
+    ...(appliedFilters.maxPrice && { maxPrice: appliedFilters.maxPrice }),
+    ...(appliedFilters.minStock && { minStock: appliedFilters.minStock }),
+    ...(appliedFilters.maxStock && { maxStock: appliedFilters.maxStock }),
+  };
+
   // RTK Query Hooks
-  const { data: products = [], isLoading } = useGetProductsQuery(undefined);
+  const {
+    data: products = [],
+    isLoading,
+    error,
+  } = useGetProductsQuery(queryParams);
   const [deleteProduct] = useDeleteProductMutation();
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1); // Pagination not fully implemented in backend yet
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    if (error) {
+      console.error(error);
+      const msg =
+        "message" in error
+          ? (error as any).message
+          : "Failed to fetch products";
+      toast.error(msg);
+    }
+  }, [error]);
 
   // Delete Dialog State
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -65,6 +132,33 @@ export default function Dashboard() {
     setProductToDelete(null);
   };
 
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      status: filters.status,
+      minPrice: filters.priceRange[0].toString(),
+      maxPrice: filters.priceRange[1].toString(),
+      minStock: filters.stockRange[0].toString(),
+      maxStock: filters.stockRange[1].toString(),
+    });
+    setFilterAnchorEl(null);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      status: "all",
+      priceRange: [0, 10000],
+      stockRange: [0, 1000],
+    });
+    setAppliedFilters({
+      status: "",
+      minPrice: "",
+      maxPrice: "",
+      minStock: "",
+      maxStock: "",
+    });
+    setFilterAnchorEl(null);
+  };
+
   const columns: Column[] = [
     { id: "sku", label: "SKU", minWidth: 100 },
     {
@@ -82,15 +176,18 @@ export default function Dashboard() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            position: "relative",
           }}
         >
           {row.media &&
           row.media.length > 0 &&
           row.media[0].type === "image" ? (
-            <img
+            <Image
               src={row.media[0].url}
               alt={row.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              fill
+              sizes="50px"
+              style={{ objectFit: "cover" }}
             />
           ) : (
             <Typography variant="caption" color="text.secondary">
@@ -212,6 +309,12 @@ export default function Dashboard() {
               <input
                 type="text"
                 placeholder="Search products..."
+                value={keyword}
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  // Manually trigger debounce update
+                  setTimeout(() => setDebouncedKeyword(e.target.value), 500);
+                }}
                 style={{
                   border: "none",
                   outline: "none",
@@ -220,22 +323,109 @@ export default function Dashboard() {
                   fontSize: "1rem",
                 }}
               />
+              {keyword && (
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setKeyword("");
+                    setDebouncedKeyword("");
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              )}
             </Box>
             <Button
               variant="outlined"
               startIcon={<FilterListIcon />}
+              onClick={(e) => setFilterAnchorEl(e.currentTarget)}
               sx={{ borderRadius: 2, textTransform: "none", minWidth: 100 }}
+              color={
+                appliedFilters.status ||
+                appliedFilters.minPrice ||
+                appliedFilters.minStock
+                  ? "primary"
+                  : "inherit"
+              }
             >
               Filters
             </Button>
-            <Button
-              variant="outlined"
-              startIcon={<MoreVertIcon />}
-              sx={{ borderRadius: 2, minWidth: 50 }}
-            />
           </Stack>
         </CardContent>
       </Card>
+
+      {/* Filter Menu */}
+      <Menu
+        anchorEl={filterAnchorEl}
+        open={filterOpen}
+        onClose={() => setFilterAnchorEl(null)}
+        PaperProps={{
+          sx: { width: 320, p: 2, borderRadius: 2, mt: 1 },
+        }}
+      >
+        <Typography variant="h6" gutterBottom>
+          Filter Options
+        </Typography>
+
+        <Stack spacing={3}>
+          <TextField
+            select
+            label="Status"
+            size="small"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+            fullWidth
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="draft">Draft</MenuItem>
+          </TextField>
+
+          <Box>
+            <Typography gutterBottom variant="body2">
+              Price Range ($0 - $10,000)
+            </Typography>
+            <Slider
+              value={filters.priceRange}
+              onChange={(e, newValue) =>
+                setFilters({ ...filters, priceRange: newValue as number[] })
+              }
+              valueLabelDisplay="auto"
+              min={0}
+              max={10000}
+            />
+          </Box>
+
+          <Box>
+            <Typography gutterBottom variant="body2">
+              Stock Quantity (0 - 1000)
+            </Typography>
+            <Slider
+              value={filters.stockRange}
+              onChange={(e, newValue) =>
+                setFilters({ ...filters, stockRange: newValue as number[] })
+              }
+              valueLabelDisplay="auto"
+              min={0}
+              max={1000}
+            />
+          </Box>
+
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button onClick={handleClearFilters} color="inherit">
+              Clear
+            </Button>
+            <Button
+              onClick={handleApplyFilters}
+              variant="contained"
+              size="small"
+            >
+              Apply
+            </Button>
+          </Stack>
+        </Stack>
+      </Menu>
 
       {/* Products Table */}
       <Card sx={{ borderRadius: 3, boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }}>
@@ -253,7 +443,6 @@ export default function Dashboard() {
             color="primary"
             onChange={(e, value) => {
               setPage(value);
-              // In a real app, you would fetch products for the new page here
             }}
             shape="rounded"
           />

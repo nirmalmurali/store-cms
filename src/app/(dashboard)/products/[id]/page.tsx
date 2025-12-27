@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Box,
   Button,
@@ -206,9 +207,19 @@ export default function ProductDetailsPage() {
                         }}
                       >
                         {item.type === "image" ? (
-                          <img
+                          <Image
                             src={item.url}
                             alt={`Product Media ${index + 1}`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            style={{
+                              objectFit: "cover",
+                            }}
+                          />
+                        ) : (
+                          <video
+                            src={item.url}
+                            controls
                             style={{
                               position: "absolute",
                               top: 0,
@@ -218,31 +229,6 @@ export default function ProductDetailsPage() {
                               objectFit: "cover",
                             }}
                           />
-                        ) : (
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              width: "100%",
-                              height: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexDirection: "column",
-                            }}
-                          >
-                            <Typography variant="caption">VIDEO</Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              fontSize={10}
-                              noWrap
-                              sx={{ maxWidth: "90%" }}
-                            >
-                              {item.url}
-                            </Typography>
-                          </Box>
                         )}
                       </Box>
                     </Grid>

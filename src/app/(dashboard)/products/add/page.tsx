@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Box,
   Button,
@@ -184,7 +185,17 @@ export default function AddProductPage() {
                 onDrop={(e) => {
                   e.preventDefault();
                   const files = Array.from(e.dataTransfer.files);
-                  setMediaFiles((prev) => [...prev, ...files]);
+                  const validFiles = files.filter((file) =>
+                    file.type.match(/^(image|video)\//)
+                  );
+
+                  if (validFiles.length !== files.length) {
+                    toast.error("Only image and video files are allowed.");
+                  }
+
+                  if (validFiles.length > 0) {
+                    setMediaFiles((prev) => [...prev, ...validFiles]);
+                  }
                 }}
               >
                 <input
@@ -196,7 +207,17 @@ export default function AddProductPage() {
                   onChange={(e) => {
                     if (e.target.files) {
                       const files = Array.from(e.target.files);
-                      setMediaFiles((prev) => [...prev, ...files]);
+                      const validFiles = files.filter((file) =>
+                        file.type.match(/^(image|video)\//)
+                      );
+
+                      if (validFiles.length !== files.length) {
+                        toast.error("Only image and video files are allowed.");
+                      }
+
+                      if (validFiles.length > 0) {
+                        setMediaFiles((prev) => [...prev, ...validFiles]);
+                      }
                     }
                   }}
                 />
@@ -226,14 +247,14 @@ export default function AddProductPage() {
                     >
                       <Stack direction="row" spacing={2} alignItems="center">
                         {file.type.startsWith("image") ? (
-                          <img
+                          <Image
                             src={URL.createObjectURL(file)}
                             alt="preview"
+                            width={50}
+                            height={50}
                             style={{
-                              width: 50,
-                              height: 50,
                               objectFit: "cover",
-                              borderRadius: 4,
+                              borderRadius: "4px",
                             }}
                           />
                         ) : (

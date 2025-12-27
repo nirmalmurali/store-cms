@@ -3,7 +3,10 @@ import { api } from "./api";
 export const productApi = api.injectEndpoints({
   endpoints: (build) => ({
     getProducts: build.query({
-      query: () => "/admin/products",
+      query: (params) => ({
+        url: "/admin/products",
+        params,
+      }),
       providesTags: (result) =>
         result
           ? [

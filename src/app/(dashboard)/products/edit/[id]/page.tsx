@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Box,
   Button,
@@ -244,14 +245,14 @@ export default function EditProductPage() {
                     >
                       <Stack direction="row" spacing={2} alignItems="center">
                         {item.type === "image" ? (
-                          <img
+                          <Image
                             src={item.url}
                             alt="product media"
+                            width={50}
+                            height={50}
                             style={{
-                              width: 50,
-                              height: 50,
                               objectFit: "cover",
-                              borderRadius: 4,
+                              borderRadius: "4px",
                             }}
                           />
                         ) : (
@@ -314,7 +315,17 @@ export default function EditProductPage() {
                 onDrop={(e) => {
                   e.preventDefault();
                   const files = Array.from(e.dataTransfer.files);
-                  setNewMediaFiles((prev) => [...prev, ...files]);
+                  const validFiles = files.filter((file) =>
+                    file.type.match(/^(image|video)\//)
+                  );
+
+                  if (validFiles.length !== files.length) {
+                    toast.error("Only image and video files are allowed.");
+                  }
+
+                  if (validFiles.length > 0) {
+                    setNewMediaFiles((prev) => [...prev, ...validFiles]);
+                  }
                 }}
               >
                 <input
@@ -326,7 +337,17 @@ export default function EditProductPage() {
                   onChange={(e) => {
                     if (e.target.files) {
                       const files = Array.from(e.target.files);
-                      setNewMediaFiles((prev) => [...prev, ...files]);
+                      const validFiles = files.filter((file) =>
+                        file.type.match(/^(image|video)\//)
+                      );
+
+                      if (validFiles.length !== files.length) {
+                        toast.error("Only image and video files are allowed.");
+                      }
+
+                      if (validFiles.length > 0) {
+                        setNewMediaFiles((prev) => [...prev, ...validFiles]);
+                      }
                     }
                   }}
                 />
@@ -359,14 +380,14 @@ export default function EditProductPage() {
                     >
                       <Stack direction="row" spacing={2} alignItems="center">
                         {file.type.startsWith("image") ? (
-                          <img
+                          <Image
                             src={URL.createObjectURL(file)}
                             alt="preview"
+                            width={50}
+                            height={50}
                             style={{
-                              width: 50,
-                              height: 50,
                               objectFit: "cover",
-                              borderRadius: 4,
+                              borderRadius: "4px",
                             }}
                           />
                         ) : (
